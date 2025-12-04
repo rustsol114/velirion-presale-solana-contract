@@ -5,6 +5,9 @@ package_manager = "yarn"
 resolution = true
 skip-lint = false
 
+[programs.devnet]
+velirion_presale = "BUn45bk9GmkxjM14ixXZkj3G7ykpRYbgt6FSk9kWJcK1"
+
 [programs.localnet]
 velirion_presale = "BUn45bk9GmkxjM14ixXZkj3G7ykpRYbgt6FSk9kWJcK1"
 
@@ -12,7 +15,7 @@ velirion_presale = "BUn45bk9GmkxjM14ixXZkj3G7ykpRYbgt6FSk9kWJcK1"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
