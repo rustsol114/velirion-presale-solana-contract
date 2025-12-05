@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Token, TokenAccount, Mint, Transfer};
+use anchor_spl::token::{Token, Transfer};
 use crate::state::*;
 use crate::constants::*;
 use crate::error::PresaleError;
@@ -22,21 +22,17 @@ pub struct ClaimVested<'info> {
     )]
     pub user_purchase: Account<'info, UserPurchase>,
     
-    pub token_mint: Account<'info, Mint>,
+    /// CHECK: Validated in handler
+    pub token_mint: UncheckedAccount<'info>,
     
-    #[account(
-        mut,
-        constraint = buyer_token_account.owner == buyer.key() @ PresaleError::Unauthorized,
-        constraint = buyer_token_account.mint == token_mint.key() @ PresaleError::InvalidTokenMint
-    )]
-    pub buyer_token_account: Account<'info, TokenAccount>,
+    #[account(mut)]
+    /// CHECK: Validated in handler
+    pub buyer_token_account: UncheckedAccount<'info>,
     
     /// CHECK: Treasury account that holds the tokens
-    #[account(
-        mut,
-        constraint = treasury.key() == presale_config.treasury @ PresaleError::InvalidTreasury
-    )]
-    pub treasury: Account<'info, TokenAccount>,
+    #[account(mut)]
+    /// CHECK: Validated in handler
+    pub treasury: UncheckedAccount<'info>,
     
     pub token_program: Program<'info, Token>,
 }
@@ -44,6 +40,22 @@ pub struct ClaimVested<'info> {
 pub fn handler(ctx: Context<ClaimVested>) -> Result<()> {
     let user_purchase = &mut ctx.accounts.user_purchase;
     let clock = Clock::get()?;
+    
+    // Validate unchecked accounts
+    let buyer_token_account_data = anchor_spl::token::TokenAccount::try_deserialize(&mut &ctx.accounts.buyer_token_account.data.borrow()[..])?;
+    require!(
+        buyer_token_account_data.owner == ctx.accounts.buyer.key(),
+        PresaleError::Unauthorized
+    );
+    require!(
+        buyer_token_account_data.mint == ctx.accounts.token_mint.key(),
+        PresaleError::InvalidTokenMint
+    );
+    
+    require!(
+        ctx.accounts.treasury.key() == ctx.accounts.presale_config.treasury,
+        PresaleError::InvalidTreasury
+    );
     
     let claimable_amount = user_purchase.get_claimable_amount(clock.unix_timestamp);
     require!(claimable_amount > 0, PresaleError::NoTokensToClaim);

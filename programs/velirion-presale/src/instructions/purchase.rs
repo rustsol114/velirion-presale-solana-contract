@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program::{transfer, Transfer as SystemTransfer};
-use anchor_spl::token::{Token, TokenAccount, Transfer};
+use anchor_spl::token::{Token, Transfer};
 use crate::state::*;
 use crate::constants::*;
 use crate::error::PresaleError;
@@ -39,14 +39,12 @@ pub struct Purchase<'info> {
         seeds = [USDC_VAULT_SEED],
         bump
     )]
-    pub usdc_vault: Account<'info, TokenAccount>,
+    /// CHECK: Validated in handler
+    pub usdc_vault: UncheckedAccount<'info>,
     
-    #[account(
-        mut,
-        constraint = buyer_usdc_account.owner == buyer.key() @ PresaleError::Unauthorized,
-        constraint = buyer_usdc_account.mint == presale_config.usdc_mint @ PresaleError::InvalidTokenMint
-    )]
-    pub buyer_usdc_account: Account<'info, TokenAccount>,
+    #[account(mut)]
+    /// CHECK: Validated in handler
+    pub buyer_usdc_account: UncheckedAccount<'info>,
     
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -61,6 +59,17 @@ pub fn handler(
     let presale_config = &mut ctx.accounts.presale_config;
     let user_purchase = &mut ctx.accounts.user_purchase;
     let clock = Clock::get()?;
+    
+    // Validate unchecked accounts
+    let buyer_usdc_account_data = anchor_spl::token::TokenAccount::try_deserialize(&mut &ctx.accounts.buyer_usdc_account.data.borrow()[..])?;
+    require!(
+        buyer_usdc_account_data.owner == ctx.accounts.buyer.key(),
+        PresaleError::Unauthorized
+    );
+    require!(
+        buyer_usdc_account_data.mint == presale_config.usdc_mint,
+        PresaleError::InvalidTokenMint
+    );
     
     // Check if presale is paused
     require!(!presale_config.is_paused, PresaleError::PresalePaused);

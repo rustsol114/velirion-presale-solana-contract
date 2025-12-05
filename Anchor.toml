@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-velirion_presale = "BUn45bk9GmkxjM14ixXZkj3G7ykpRYbgt6FSk9kWJcK1"
+velirion_presale = "91uNkK5URavMx6onv6c8XTZ6VkEj4RzA6Xa4pQydWs2s"
 
 [programs.localnet]
 velirion_presale = "BUn45bk9GmkxjM14ixXZkj3G7ykpRYbgt6FSk9kWJcK1"
@@ -20,5 +20,6 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\""
+test-no-deploy = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\""
 
 [hooks]

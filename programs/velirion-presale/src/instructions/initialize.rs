@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token, TokenAccount};
+use anchor_spl::token::{Token, TokenAccount};
 use crate::state::*;
 use crate::constants::*;
 use crate::error::PresaleError;
@@ -9,9 +9,11 @@ pub struct Initialize<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     
-    pub token_mint: Account<'info, Mint>,
+    /// CHECK: Validated in handler
+    pub token_mint: UncheckedAccount<'info>,
     
-    pub usdc_mint: Account<'info, Mint>,
+    /// CHECK: Validated in handler
+    pub usdc_mint: UncheckedAccount<'info>,
     
     #[account(
         init,
@@ -40,7 +42,8 @@ pub struct Initialize<'info> {
     pub usdc_vault: Account<'info, TokenAccount>,
     
     /// CHECK: Treasury token account that holds presale tokens (must be created separately and funded)
-    pub treasury: Account<'info, TokenAccount>,
+    /// CHECK: Validated in handler
+    pub treasury: UncheckedAccount<'info>,
     
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -90,9 +93,10 @@ pub fn handler(
         }
     }
     
-    // Validate treasury account
+    // Validate token mints and treasury account
+    let treasury_data = anchor_spl::token::TokenAccount::try_deserialize(&mut &ctx.accounts.treasury.data.borrow()[..])?;
     require!(
-        ctx.accounts.treasury.mint == ctx.accounts.token_mint.key(),
+        treasury_data.mint == ctx.accounts.token_mint.key(),
         PresaleError::InvalidTokenMint
     );
     

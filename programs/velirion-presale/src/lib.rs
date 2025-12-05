@@ -10,10 +10,10 @@ pub use error::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("BUn45bk9GmkxjM14ixXZkj3G7ykpRYbgt6FSk9kWJcK1");
+declare_id!("91uNkK5URavMx6onv6c8XTZ6VkEj4RzA6Xa4pQydWs2s");
 
 #[program]
-pub mod solana_presale {
+pub mod velirion_presale {
     use super::*;
 
     pub fn initialize(
